@@ -1,0 +1,54 @@
+{
+  "name": "project-lvl3-s238",
+  "version": "1.0.0",
+  "description": "Page loader",
+  "main": "index.js",
+  "bin": {
+    "page-loader": "dist/bin/page-loader.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "jest",
+    "babel-node": "babel-node",
+    "build": "NODE_ENV=production babel src --out-dir dist --source-maps inline",
+    "prepublishOnly": "npm run build",
+    "eslint": "eslint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gr1mmj00u/project-lvl3-s238.git"
+  },
+  "keywords": [
+    "page",
+    "loader"
+  ],
+  "author": "Stanislav Kharitonov",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gr1mmj00u/project-lvl3-s238/issues"
+  },
+  "homepage": "https://github.com/gr1mmj00u/project-lvl3-s238#readme",
+  "jest": {
+    "testEnvironment": "node"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
+    "babel-eslint": "^8.2.3",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-stage-0": "^6.24.1",
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.11.0",
+    "eslint-plugin-jest": "^21.15.1",
+    "jest": "^22.4.3",
+    "nock": "^9.2.5"
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "commander": "^2.15.1",
+    "mz": "^2.7.0"
+  }
+}
