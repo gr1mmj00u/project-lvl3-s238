@@ -16,8 +16,11 @@ commander
       console.error('no url parameter!');
       process.exit(1);
     }
-
-    pageLoader(url, dir, options.output);
+    if (options.output) {
+      pageLoader(url, dir);
+    } else {
+      pageLoader(url);
+    }
   });
 
 commander.parse(process.argv);
