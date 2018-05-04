@@ -3,7 +3,7 @@ import commander from 'commander';
 import pageLoader from '..';
 
 commander
-  .version('1.0.1')
+  .version('1.0.2')
   .arguments('<dir> <url>')
   .description('Compares two configuration files and shows a difference.')
   .option('-o, --output', 'output format')

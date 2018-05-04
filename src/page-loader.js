@@ -1,15 +1,16 @@
 import axios from 'axios';
 import mzfs from 'mz/fs';
-// import fs from 'fs';
 import url from 'url';
 import path from 'path';
 import cheerio from 'cheerio';
-// import { rejects } from 'assert';
 
 export const getFileName = (link, ext = '') => {
   const { host, path: pathLink } = url.parse(link);
   const { name, dir, ext: fileExt } = path.parse(pathLink);
-  const parseUrl = `${host}${path.resolve(dir, name)}`;
+  const parseUrl = (host)
+    ? `${host}${path.resolve(dir, name)}`
+    : `${path.resolve(dir, name)}`;
+
   const extention = (ext) ? `.${ext}` : fileExt;
 
   const fileName = parseUrl.match(/(\w*)/g)
@@ -21,14 +22,14 @@ export const getFileName = (link, ext = '') => {
 
 const loadResource = (link, dir, fileName) => {
   const fullFileName = path.resolve(dir, fileName);
-  console.log(link);
+
   return axios.get(link, { responseType: 'arraybuffer' })
     .then(response => mzfs.writeFile(fullFileName, response.data))
     .then(() => path.parse(fullFileName))
     .catch(e => console.log(e));
 };
 
-const parsePage = (data, hostLink, assetsFolderPath) => {
+const parsePage = (data, hostLink, assetsFolder, assetsFolderPath) => {
   const $ = cheerio.load(data);
 
   const getObj = (i, e) => $(e);
@@ -48,7 +49,7 @@ const parsePage = (data, hostLink, assetsFolderPath) => {
     const attr = e.attr('src');
     const fileName = getFileName(attr);
     const link = url.resolve(hostLink, attr);
-    const newLink = path.resolve('.', assetsFolderPath, fileName);
+    const newLink = path.resolve('/', assetsFolder, fileName);
 
     e.attr('src', newLink);
 
@@ -64,7 +65,7 @@ export default (link, dir = `${__dirname}`) => {
   const { protocol, host } = url.parse(link);
   const rootLink = url.format({ protocol, host });
 
-  const pageName = `${getFileName(link, 'html')}`;
+  const pageName = getFileName(link, 'html');
   const fullPageName = path.resolve(dir, pageName);
 
   const assetsFolder = `${getFileName(link)}_files`;
@@ -72,7 +73,7 @@ export default (link, dir = `${__dirname}`) => {
 
   return loadResource(link, dir, pageName)
     .then(data => mzfs.readFile(path.format(data), 'utf-8'))
-    .then(data => parsePage(data, rootLink, assetsFolderPath))
+    .then(data => parsePage(data, rootLink, assetsFolder, assetsFolderPath))
     .then(html => mzfs.writeFile(fullPageName, html))
     .catch(e => console.log(e));
 };
