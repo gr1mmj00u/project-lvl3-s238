@@ -3,11 +3,13 @@ import os from 'os';
 import path from 'path';
 import nock from 'nock';
 import axios from 'axios';
+import debug from 'debug';
 import httpAdapter from 'axios/lib/adapters/http';
 import pageLoader from '../src';
 import { getFileName } from '../src/page-loader';
 
 const getFullPath = file => path.resolve(__dirname, file);
+const log = debug('page-loader:test');
 
 const tmpdir = os.tmpdir();
 const host = 'http://www.hexlet.io';
@@ -58,7 +60,7 @@ beforeEach(() => {
 
 test('Save page', async () => {
   const expected = await fs.readFile(expectedPage, 'utf-8');
-
+  log('Start test "Save page"');
   try {
     const tempPath = await fs.mkdtemp(path.join(tmpdir, 'foo-'));
     await pageLoader(pageLink, tempPath);
@@ -70,9 +72,11 @@ test('Save page', async () => {
   } catch (e) {
     expect(e).toMatch('error');
   }
+  log('End test "Save page"');
 });
 
 test('Save files', async () => {
+  log('Start test "Save files"');
   const css = await fs.readFile(getFullPath('__fixtures__/src/css/test.css'), 'utf-8');
   const js = await fs.readFile(getFullPath('__fixtures__/src/js/test.js'), 'utf-8');
   const jpeg = await fs.readFile(getFullPath('__fixtures__/src/img/image1.jpg'), 'utf-8');
@@ -90,4 +94,5 @@ test('Save files', async () => {
   } catch (e) {
     expect(e).toMatch('error');
   }
+  log('End test "Save page"');
 });

@@ -3,8 +3,12 @@ import mzfs from 'mz/fs';
 import url from 'url';
 import path from 'path';
 import cheerio from 'cheerio';
+import debug from 'debug';
+
+const log = debug('page-loader:main');
 
 export const getFileName = (link, ext = '') => {
+  log('getFileName()');
   const { host, path: pathLink } = url.parse(link);
   const { name, dir, ext: fileExt } = path.parse(pathLink);
   const parseUrl = (host)
@@ -21,6 +25,7 @@ export const getFileName = (link, ext = '') => {
 };
 
 const loadResource = (link, dir, fileName) => {
+  log('loadResourse()');
   const fullFileName = path.resolve(dir, fileName);
 
   return axios.get(link, { responseType: 'arraybuffer' })
@@ -30,6 +35,7 @@ const loadResource = (link, dir, fileName) => {
 };
 
 const getSelector = obj => (tag) => {
+  log('getSelector()');
   let selector = '';
 
   switch (tag) {
@@ -49,6 +55,7 @@ const getSelector = obj => (tag) => {
 };
 
 const parsePage = (data, hostLink, assetsFolder, assetsFolderPath) => {
+  log('parsePage()');
   const $ = cheerio.load(data);
   const selector = getSelector($);
 
@@ -86,6 +93,7 @@ const parsePage = (data, hostLink, assetsFolder, assetsFolderPath) => {
 };
 
 export default (link, dir = `${__dirname}`) => {
+  log('pageLoader()');
   const { protocol, host } = url.parse(link);
   const rootLink = url.format({ protocol, host });
 
@@ -94,7 +102,14 @@ export default (link, dir = `${__dirname}`) => {
 
   const assetsFolder = `${getFileName(link)}_files`;
   const assetsFolderPath = path.resolve(dir, assetsFolder);
-
+  log(` Start parameters:
+    link = ${link}
+    dir = ${dir}
+    pageName = ${pageName}
+    fullPageName = ${fullPageName}
+    assetsFolder = ${assetsFolder}
+    assetsFolderPath = ${assetsFolderPath}
+  `);
   return loadResource(link, dir, pageName)
     .then(data => mzfs.readFile(path.format(data), 'utf-8'))
     .then(data => parsePage(data, rootLink, assetsFolder, assetsFolderPath))
