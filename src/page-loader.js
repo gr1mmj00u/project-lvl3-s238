@@ -3,6 +3,7 @@ import mzfs from 'mz/fs';
 import url from 'url';
 import path from 'path';
 import cheerio from 'cheerio';
+import selector from './selector';
 
 export const getFileName = (link, ext = '') => {
   const { host, path: pathLink } = url.parse(link);
@@ -32,32 +33,36 @@ const loadResource = (link, dir, fileName) => {
 const parsePage = (data, hostLink, assetsFolder, assetsFolderPath) => {
   const $ = cheerio.load(data);
 
-  const getObj = (i, e) => $(e);
+  const links = selector('link')($);
+  const images = selector('img')($);
+  const scripts = selector('script')($);
 
-  const links = $('link[src]').map(getObj).get();
-  const images = $('img[src]').map(getObj).get();
-  const scripts = $('script[src]').map(getObj).get();
-
-  const resources = [...links, ...images, ...scripts];
-
-  const localResources = resources.filter((e) => {
-    const { host } = url.parse(e.attr('src'));
+  const getFilter = attr => (e) => {
+    const { host } = url.parse(e.attr(attr));
     return !host;
-  });
+  };
 
-  const process = (e) => {
-    const attr = e.attr('src');
-    const fileName = getFileName(attr);
-    const link = url.resolve(hostLink, attr);
+  const filteredLinks = links.filter(getFilter('href'));
+  const filteredImages = images.filter(getFilter('src'));
+  const filteredScripts = scripts.filter(getFilter('src'));
+
+  const load = attr => (e) => {
+    const href = e.attr(attr);
+    const fileName = getFileName(href);
+    const link = url.resolve(hostLink, href);
     const newLink = path.resolve('/', assetsFolder, fileName);
 
-    e.attr('src', newLink);
+    e.attr(attr, newLink);
 
     return loadResource(link, assetsFolderPath, fileName);
   };
 
+  const linksPromises = filteredLinks.map(load('href'));
+  const imagesPromises = filteredImages.map(load('src'));
+  const scriptsPromises = filteredScripts.map(load('src'));
+
   return mzfs.mkdir(assetsFolderPath)
-    .then(() => Promise.all(localResources.map(process)))
+    .then(() => Promise.all([...linksPromises, ...imagesPromises, ...scriptsPromises]))
     .then(() => $.html());
 };
 

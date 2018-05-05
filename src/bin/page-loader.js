@@ -4,23 +4,14 @@ import pageLoader from '..';
 
 commander
   .version('1.0.2')
-  .arguments('<dir> <url>')
   .description('Compares two configuration files and shows a difference.')
-  .option('-o, --output', 'output format')
-  .action((dir, url, options) => {
-    if (typeof dir === 'undefined') {
-      console.error('no dir parameter!');
-      process.exit(1);
-    }
+  .option('-o, --output [dir]', 'output dir', process.cwd())
+  .arguments('<url>')
+  .action((url, options) => {
     if (typeof url === 'undefined') {
       console.error('no url parameter!');
       process.exit(1);
     }
-    if (options.output) {
-      pageLoader(url, dir);
-    } else {
-      pageLoader(url);
-    }
+    pageLoader(url, options.output);
   });
-
 commander.parse(process.argv);
