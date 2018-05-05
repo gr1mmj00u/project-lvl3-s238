@@ -3,7 +3,6 @@ import mzfs from 'mz/fs';
 import url from 'url';
 import path from 'path';
 import cheerio from 'cheerio';
-import selector from './selector';
 
 export const getFileName = (link, ext = '') => {
   const { host, path: pathLink } = url.parse(link);
@@ -30,12 +29,32 @@ const loadResource = (link, dir, fileName) => {
     .catch(e => console.log(e));
 };
 
+const getSelector = obj => (tag) => {
+  let selector = '';
+
+  switch (tag) {
+    case 'link':
+      selector = 'link[href]';
+      break;
+    case 'img':
+      selector = 'img[src]';
+      break;
+    case 'script':
+      selector = 'script[src]';
+      break;
+    default: return [];
+  }
+
+  return obj(selector).map((i, e) => obj(e)).get();
+};
+
 const parsePage = (data, hostLink, assetsFolder, assetsFolderPath) => {
   const $ = cheerio.load(data);
+  const selector = getSelector($);
 
-  const links = selector('link')($);
-  const images = selector('img')($);
-  const scripts = selector('script')($);
+  const links = selector('link');
+  const images = selector('img');
+  const scripts = selector('script');
 
   const getFilter = attr => (e) => {
     const { host } = url.parse(e.attr(attr));
