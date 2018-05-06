@@ -12,6 +12,14 @@ commander
       console.error('no url parameter!');
       process.exit(1);
     }
-    pageLoader(url, options.output);
+    pageLoader(url, options.output)
+      .then(() => {
+        console.log('Successful page loading!');
+        process.exit();
+      })
+      .catch(err => {
+        console.error(`Oops, something went wrong!\n${err}`);
+        process.exit(1);
+      });
   });
 commander.parse(process.argv);

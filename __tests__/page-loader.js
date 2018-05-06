@@ -56,6 +56,9 @@ beforeEach(() => {
       path.resolve(__dirname, '__fixtures__/src/img/image2.png'),
       { 'Content-Type': 'image/png' },
     );
+  nock(host)
+    .get('/src/img/image3.png')
+    .reply(404);
 });
 
 test('Save page', async () => {
@@ -87,12 +90,33 @@ test('Save files', async () => {
     await pageLoader(pageLink, tempPath);
 
     const assetsPath = path.resolve(tempPath, `${getFileName(pageLink)}_files`);
-    expect(await fs.readFile(path.resolve(assetsPath, 'src-css-test.css'), 'utf-8')).toBe(css);
-    expect(await fs.readFile(path.resolve(assetsPath, 'src-js-test.js'), 'utf-8')).toBe(js);
-    expect(await fs.readFile(path.resolve(assetsPath, 'src-img-image1.jpg'), 'utf-8')).toBe(jpeg);
-    expect(await fs.readFile(path.resolve(assetsPath, 'src-img-image2.png'), 'utf-8')).toBe(png);
+    const cssData = await fs.readFile(path.resolve(assetsPath, 'src-css-test.css'), 'utf-8');
+    const jsData = await fs.readFile(path.resolve(assetsPath, 'src-js-test.js'), 'utf-8');
+    const jpegData = await fs.readFile(path.resolve(assetsPath, 'src-img-image1.jpg'), 'utf-8');
+    const pngData = await fs.readFile(path.resolve(assetsPath, 'src-img-image2.png'), 'utf-8');
+
+    expect(cssData).toBe(css);
+    expect(jsData).toBe(js);
+    expect(jpegData).toBe(jpeg);
+    expect(pngData).toBe(png);
   } catch (e) {
     expect(e).toMatch('error');
   }
   log('End test "Save page"');
+});
+
+test('Error tests - 404 status', async () => {
+  try {
+    await pageLoader(path.resolve(host, '/src/img/image3.png'));
+  } catch (e) {
+    expect(e.message).toMatch('Resource by (/src/img/image3.png) was not saved.');
+  }
+});
+
+test('Error tests - output dir is not exist', async () => {
+  try {
+    await pageLoader(path.resolve(host, '/src/img/image3.png'), './test/folder/');
+  } catch (e) {
+    expect(e.message).toMatch('Folder (./test/folder/) does not exists.');
+  }
 });

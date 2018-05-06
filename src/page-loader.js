@@ -29,9 +29,13 @@ const loadResource = (link, dir, fileName) => {
   const fullFileName = path.resolve(dir, fileName);
 
   return axios.get(link, { responseType: 'arraybuffer' })
+    .catch((e) => {
+      log(e);
+      throw new Error(`Resource by (${link}) was not saved.`);
+    })
     .then(response => mzfs.writeFile(fullFileName, response.data))
-    .then(() => path.parse(fullFileName))
-    .catch(e => console.log(e));
+    .then(() => console.log(`>>> ${link}`))
+    .then(() => path.parse(fullFileName));
 };
 
 const getSelector = obj => (tag) => {
@@ -110,9 +114,13 @@ export default (link, dir = `${__dirname}`) => {
     assetsFolder = ${assetsFolder}
     assetsFolderPath = ${assetsFolderPath}
   `);
+
+  if (!mzfs.existsSync(dir)) {
+    return Promise.reject(new Error(`Folder (${dir}) does not exists.`));
+  }
+
   return loadResource(link, dir, pageName)
     .then(data => mzfs.readFile(path.format(data), 'utf-8'))
     .then(data => parsePage(data, rootLink, assetsFolder, assetsFolderPath))
-    .then(html => mzfs.writeFile(fullPageName, html))
-    .catch(e => console.log(e));
+    .then(html => mzfs.writeFile(fullPageName, html));
 };
