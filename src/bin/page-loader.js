@@ -17,7 +17,7 @@ commander
         console.log('Successful page loading!');
         process.exit();
       })
-      .catch(err => {
+      .catch((err) => {
         console.error(`Oops, something went wrong!\n${err}`);
         process.exit(1);
       });
