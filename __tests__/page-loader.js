@@ -63,7 +63,6 @@ beforeEach(() => {
 
 test('Save page', async () => {
   const expected = await fs.readFile(expectedPage, 'utf-8');
-  log('Start test "Save page"');
   try {
     const tempPath = await fs.mkdtemp(path.join(tmpdir, 'foo-'));
     await pageLoader(pageLink, tempPath);
@@ -73,13 +72,12 @@ test('Save page', async () => {
 
     expect(data).toBe(expected);
   } catch (e) {
+    log('Save page => %s', e.toString());
     expect(e).toMatch('error');
   }
-  log('End test "Save page"');
 });
 
 test('Save files', async () => {
-  log('Start test "Save files"');
   const css = await fs.readFile(getFullPath('__fixtures__/src/css/test.css'), 'utf-8');
   const js = await fs.readFile(getFullPath('__fixtures__/src/js/test.js'), 'utf-8');
   const jpeg = await fs.readFile(getFullPath('__fixtures__/src/img/image1.jpg'), 'utf-8');
@@ -100,23 +98,26 @@ test('Save files', async () => {
     expect(jpegData).toBe(jpeg);
     expect(pngData).toBe(png);
   } catch (e) {
+    log('Save files => %s', e.toString());
     expect(e).toMatch('error');
   }
-  log('End test "Save page"');
 });
 
-test('Error tests - 404 status', async () => {
+test('404 status', async () => {
   try {
-    await pageLoader(path.resolve(host, '/src/img/image3.png'));
+    const tempPath = await fs.mkdtemp(path.join(tmpdir, 'foo-'));
+    await pageLoader(path.resolve(host, '/src/img/image3.png'), tempPath);
   } catch (e) {
+    log('404 status => %s', e.toString());
     expect(e.message).toMatch('Resource by (/src/img/image3.png) was not saved.');
   }
 });
 
-test('Error tests - output dir is not exist', async () => {
+test('Output dir is not exist', async () => {
   try {
     await pageLoader(path.resolve(host, '/src/img/image3.png'), './test/folder/');
   } catch (e) {
+    log('Output dir is not exist => %s', e.toString());
     expect(e.message).toMatch('Folder (./test/folder/) does not exists.');
   }
 });

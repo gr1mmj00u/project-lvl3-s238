@@ -7,8 +7,13 @@ import debug from 'debug';
 
 const log = debug('page-loader:main');
 
+const selectors = {
+  img: 'src',
+  script: 'src',
+  link: 'href',
+};
+
 export const getFileName = (link, ext = '') => {
-  log('getFileName()');
   const { host, path: pathLink } = url.parse(link);
   const { name, dir, ext: fileExt } = path.parse(pathLink);
   const parseUrl = (host)
@@ -25,7 +30,10 @@ export const getFileName = (link, ext = '') => {
 };
 
 const loadResource = (link, dir, fileName) => {
-  log('loadResourse()');
+  log(`Log resourse:
+    link = %s;
+    dir = %s;
+    fileName = %s`, link, dir, fileName);
   const fullFileName = path.resolve(dir, fileName);
 
   return axios.get(link, { responseType: 'arraybuffer' })
@@ -38,66 +46,41 @@ const loadResource = (link, dir, fileName) => {
     .then(() => path.parse(fullFileName));
 };
 
-const getSelector = obj => (tag) => {
-  log('getSelector()');
-  let selector = '';
-
-  switch (tag) {
-    case 'link':
-      selector = 'link[href]';
-      break;
-    case 'img':
-      selector = 'img[src]';
-      break;
-    case 'script':
-      selector = 'script[src]';
-      break;
-    default: return [];
-  }
-
-  return obj(selector).map((i, e) => obj(e)).get();
-};
+const getTagsObjects = ($, tags) => tags.reduce((acc, tag) => {
+  const elements = $(tag).get();
+  return [...acc, ...elements];
+}, []);
 
 const parsePage = (data, hostLink, assetsFolder, assetsFolderPath) => {
-  log('parsePage()');
   const $ = cheerio.load(data);
-  const selector = getSelector($);
+  const tagObjects = getTagsObjects($, ['img', 'script', 'link']);
 
-  const links = selector('link');
-  const images = selector('img');
-  const scripts = selector('script');
+  const promises = tagObjects.reduce((acc, e) => {
+    const attribute = selectors[e.name];
+    const ref = $(e).attr(attribute);
+    const { host } = url.parse(ref);
 
-  const getFilter = attr => (e) => {
-    const { host } = url.parse(e.attr(attr));
-    return !host;
-  };
+    if (host) {
+      return acc;
+    }
 
-  const filteredLinks = links.filter(getFilter('href'));
-  const filteredImages = images.filter(getFilter('src'));
-  const filteredScripts = scripts.filter(getFilter('src'));
-
-  const load = attr => (e) => {
-    const href = e.attr(attr);
-    const fileName = getFileName(href);
-    const link = url.resolve(hostLink, href);
+    const fileName = getFileName(ref);
+    const link = url.resolve(hostLink, ref);
     const newLink = path.resolve('/', assetsFolder, fileName);
 
-    e.attr(attr, newLink);
+    log('New link %s', newLink);
 
-    return loadResource(link, assetsFolderPath, fileName);
-  };
+    $(e).attr(attribute, newLink);
 
-  const linksPromises = filteredLinks.map(load('href'));
-  const imagesPromises = filteredImages.map(load('src'));
-  const scriptsPromises = filteredScripts.map(load('src'));
+    return [...acc, loadResource(link, assetsFolderPath, fileName)];
+  }, []);
 
   return mzfs.mkdir(assetsFolderPath)
-    .then(() => Promise.all([...linksPromises, ...imagesPromises, ...scriptsPromises]))
+    .then(() => Promise.all(promises))
     .then(() => $.html());
 };
 
-export default (link, dir = `${__dirname}`) => {
-  log('pageLoader()');
+export default (link, dir) => {
   const { protocol, host } = url.parse(link);
   const rootLink = url.format({ protocol, host });
 
@@ -106,14 +89,6 @@ export default (link, dir = `${__dirname}`) => {
 
   const assetsFolder = `${getFileName(link)}_files`;
   const assetsFolderPath = path.resolve(dir, assetsFolder);
-  log(` Start parameters:
-    link = ${link}
-    dir = ${dir}
-    pageName = ${pageName}
-    fullPageName = ${fullPageName}
-    assetsFolder = ${assetsFolder}
-    assetsFolderPath = ${assetsFolderPath}
-  `);
 
   if (!mzfs.existsSync(dir)) {
     return Promise.reject(new Error(`Folder (${dir}) does not exists.`));

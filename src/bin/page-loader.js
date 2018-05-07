@@ -15,10 +15,10 @@ commander
     pageLoader(url, options.output)
       .then(() => {
         console.log('Successful page loading!');
-        process.exit();
       })
       .catch((err) => {
-        console.error(`Oops, something went wrong!\n${err}`);
+        console.error('Oops, something went wrong!');
+        console.error(err.toString());
         process.exit(1);
       });
   });
