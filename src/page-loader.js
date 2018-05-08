@@ -1,5 +1,6 @@
 import axios from 'axios';
 import mzfs from 'mz/fs';
+import Listr from 'listr';
 import url from 'url';
 import path from 'path';
 import cheerio from 'cheerio';
@@ -36,14 +37,16 @@ const loadResource = (link, dir, fileName) => {
     fileName = %s`, link, dir, fileName);
   const fullFileName = path.resolve(dir, fileName);
 
-  return axios.get(link, { responseType: 'arraybuffer' })
-    .catch((e) => {
-      log(e);
-      throw new Error(`Resource by (${link}) was not saved.`);
-    })
-    .then(response => mzfs.writeFile(fullFileName, response.data))
-    .then(() => console.log(`>>> ${link}`))
-    .then(() => path.parse(fullFileName));
+  return {
+    title: link,
+    task: () => axios.get(link, { responseType: 'arraybuffer' })
+      .catch((e) => {
+        log(e);
+        throw new Error(`Resource by (${link}) was not saved.`);
+      })
+      .then(response => mzfs.writeFile(fullFileName, response.data))
+      .then(() => path.parse(fullFileName)),
+  };
 };
 
 const getTagsObjects = ($, tags) => tags.reduce((acc, tag) => {
@@ -55,7 +58,7 @@ const parsePage = (data, hostLink, assetsFolder, assetsFolderPath) => {
   const $ = cheerio.load(data);
   const tagObjects = getTagsObjects($, ['img', 'script', 'link']);
 
-  const promises = tagObjects.reduce((acc, e) => {
+  const tasks = tagObjects.reduce((acc, e) => {
     const attribute = selectors[e.name];
     const ref = $(e).attr(attribute);
     const { host } = url.parse(ref);
@@ -75,8 +78,11 @@ const parsePage = (data, hostLink, assetsFolder, assetsFolderPath) => {
     return [...acc, loadResource(link, assetsFolderPath, fileName)];
   }, []);
 
+  const loadResourseTasks = new Listr(tasks);
+  const promiseListr = Promise.resolve(loadResourseTasks.run());
+
   return mzfs.mkdir(assetsFolderPath)
-    .then(() => Promise.all(promises))
+    .then(() => promiseListr)
     .then(() => $.html());
 };
 
@@ -94,8 +100,13 @@ export default (link, dir) => {
     return Promise.reject(new Error(`Folder (${dir}) does not exists.`));
   }
 
-  return loadResource(link, dir, pageName)
-    .then(data => mzfs.readFile(path.format(data), 'utf-8'))
+  return axios.get(link, { responseType: 'arraybuffer' })
+    .catch((e) => {
+      log(e);
+      throw new Error(`Resource by (${link}) was not saved.`);
+    })
+    .then(response => mzfs.writeFile(fullPageName, response.data))
+    .then(() => mzfs.readFile(fullPageName, 'utf-8'))
     .then(data => parsePage(data, rootLink, assetsFolder, assetsFolderPath))
     .then(html => mzfs.writeFile(fullPageName, html));
 };

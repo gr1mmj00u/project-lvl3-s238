@@ -104,20 +104,13 @@ test('Save files', async () => {
 });
 
 test('404 status', async () => {
-  try {
-    const tempPath = await fs.mkdtemp(path.join(tmpdir, 'foo-'));
-    await pageLoader(path.resolve(host, '/src/img/image3.png'), tempPath);
-  } catch (e) {
-    log('404 status => %s', e.toString());
-    expect(e.message).toMatch('Resource by (/src/img/image3.png) was not saved.');
-  }
+  const tempPath = await fs.mkdtemp(path.join(tmpdir, 'foo-'));
+  const testStatus = async () => pageLoader(path.resolve(host, '/src/img/image3.png'), tempPath);
+
+  await expect(testStatus()).rejects.toThrowErrorMatchingSnapshot();
 });
 
 test('Output dir is not exist', async () => {
-  try {
-    await pageLoader(path.resolve(host, '/src/img/image3.png'), './test/folder/');
-  } catch (e) {
-    log('Output dir is not exist => %s', e.toString());
-    expect(e.message).toMatch('Folder (./test/folder/) does not exists.');
-  }
+  const testOutputdir = async () => pageLoader(path.resolve(host, '/src/img/image3.png'), './test/folder/');
+  await expect(testOutputdir()).rejects.toThrowErrorMatchingSnapshot();
 });

@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`404 status 1`] = `"Resource by (/src/img/image3.png) was not saved."`;
+
+exports[`Output dir is not exist 1`] = `"Folder (./test/folder/) does not exists."`;
