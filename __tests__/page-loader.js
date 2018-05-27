@@ -16,6 +16,7 @@ const host = 'http://www.hexlet.io';
 const query = '/test/save/page/?test=10&param=20';
 const pageLink = `${host}${query}`;
 const sourcePage = getFullPath('__fixtures__/source.html');
+const sourceError = getFullPath('__fixtures__/source-error.html');
 const expectedPage = getFullPath('__fixtures__/expected.html');
 
 axios.defaults.adapter = httpAdapter;
@@ -56,6 +57,11 @@ beforeEach(() => {
       path.resolve(__dirname, '__fixtures__/src/img/image2.png'),
       { 'Content-Type': 'image/png' },
     );
+
+  nock(host)
+    .get('/test/error-image/')
+    .replyWithFile(200, sourceError, { 'Content-Type': 'text/html' });
+
   nock(host)
     .get('/src/img/image3.png')
     .reply(404);
@@ -105,8 +111,7 @@ test('Save files', async () => {
 
 test('404 status', async () => {
   const tempPath = await fs.mkdtemp(path.join(tmpdir, 'foo-'));
-  const testStatus = async () => pageLoader(path.resolve(host, '/src/img/image3.png'), tempPath);
-
+  const testStatus = async () => pageLoader(`${host}/test/error-image/`, tempPath);
   await expect(testStatus()).rejects.toThrowErrorMatchingSnapshot();
 });
 

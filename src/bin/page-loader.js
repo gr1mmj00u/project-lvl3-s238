@@ -9,17 +9,20 @@ commander
   .arguments('<url>')
   .action((url, options) => {
     if (typeof url === 'undefined') {
-      console.error('no url parameter!');
+      console.error('No url parameter!');
       process.exit(1);
     }
-    pageLoader(url, options.output)
-      .then(() => {
+
+    (async () => {
+      try {
+        await pageLoader(url, options.output);
         console.log('Successful page loading!');
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error('Oops, something went wrong!');
         console.error(err.toString());
         process.exit(1);
-      });
+      }
+    })();
   });
+
 commander.parse(process.argv);

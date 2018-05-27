@@ -1,4 +1,4 @@
-# Page loader - project-lvl3-s238
+# Page loader
 
 [![Maintainability](https://api.codeclimate.com/v1/badges/3322246326d883d634bd/maintainability)](https://codeclimate.com/github/gr1mmj00u/project-lvl3-s238/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/3322246326d883d634bd/test_coverage)](https://codeclimate.com/github/gr1mmj00u/project-lvl3-s238/test_coverage)
